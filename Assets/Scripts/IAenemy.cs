@@ -9,7 +9,9 @@ public class IAenemy : MonoBehaviour
     {
         Patrolling,
 
-        Chasing
+        Chasing,
+
+        Searching
     }
 
     State _currentState;
@@ -21,7 +23,13 @@ public class IAenemy : MonoBehaviour
 
     [SerializeField] float _visionsRange = 15;
     [SerializeField] float _visionAngle = 90;
-    
+
+    Vector3 _lastTargetPosition;
+
+    float _searchTimer;
+    [SerializeField]float _searchWaitTime = 15;
+    [SerializeField]float _searchRadius = 30;
+
     void Awake()
     {
         _enemyAgent = GetComponent<NavMeshAgent>();
@@ -42,6 +50,9 @@ public class IAenemy : MonoBehaviour
             break;
             case State.Chasing:
                 Chase();
+            break;
+            case State.Searching:
+                Search();
             break;
         }
     }
@@ -64,6 +75,32 @@ public class IAenemy : MonoBehaviour
         _enemyAgent.destination = _playerTransform.position;
 
         if(OnRange() == false)
+        {
+            _searchTimer = 0;   
+            _currentState = State.Searching;
+        }
+    }
+
+    void Search()
+    {
+        if(OnRange() == true)
+        {
+            _currentState = State.Chasing;
+        }
+
+        _searchTimer += Time.deltaTime;
+        
+        if(_searchTimer < _searchWaitTime)
+        {
+            if(_enemyAgent.remainingDistance < 0.5f)
+            {
+                Vector3 _randomSearchPoint = _lastTargetPosition + Random.insideUnitSphere * _searchRadius;
+                _randomSearchPoint.y = _lastTargetPosition.y;
+                _enemyAgent.destination = _randomSearchPoint;
+            }
+           
+        }
+        else
         {
             _currentState = State.Patrolling;
         }
@@ -94,7 +131,23 @@ public class IAenemy : MonoBehaviour
 
         if(_distanceToPlayer <= _visionsRange && _angleToPlayer < _visionAngle * 0.5f)
         {
-            return true;
+            if(_playerTransform.position == _lastTargetPosition)
+            {
+                return true;
+            }
+
+            RaycastHit _hit;
+            if(Physics.Raycast(transform.position, _directionToPlayer, out _hit, _distanceToPlayer))
+            {
+                if(_hit.collider.CompareTag("Player"))
+                {
+                    _lastTargetPosition = _playerTransform.position;
+                    return true;
+                }
+            }
+
+            return false;
+
         }
 
         return false;
