@@ -11,8 +11,6 @@ public class IAenemyPatrol : MonoBehaviour
 
         Chasing,
 
-        Searching,
-
         Waiting,
 
         Attacking
