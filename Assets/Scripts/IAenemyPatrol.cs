@@ -37,8 +37,7 @@ public class IAenemyPatrol : MonoBehaviour
     private int _currentPatrolIndex = 0;
     private float _waitTime = 5f;
     [SerializeField] float _attackRange = 2f;
-    [SerializeField] private float _waitAttackTime = 2.0f;
-    [SerializeField] private float _timer = 0.0f;
+    
 
     void Awake()
     {
@@ -94,12 +93,22 @@ public class IAenemyPatrol : MonoBehaviour
                 _currentState = State.Attacking;
             }  
         }
+
+        if (OnRange() == false)
+        {
+            _currentState = State.Patrolling;
+        }
     }
 
     
 
     void Wait()
     {
+        if(OnRange() == true)
+        {
+            _currentState = State.Chasing;
+        }
+
         StartCoroutine(DoWait());
     }
 
@@ -111,14 +120,9 @@ public class IAenemyPatrol : MonoBehaviour
 
     void Attack()
     {
-        _timer += Time.deltaTime;
-
-        if (_timer > _waitAttackTime)
-        {
-            Debug.Log("bombazo");
-            _timer = 0;
-        }
+        
         Debug.Log("bombazo");
+         
 
         _currentState = State.Chasing;
     }
@@ -126,7 +130,8 @@ public class IAenemyPatrol : MonoBehaviour
     void ToPoint()
     {
         Transform target = _patrolPoints[_currentPatrolIndex];
-        transform.position = Vector3.MoveTowards(transform.position, target.position, _speed * Time.deltaTime);
+        _enemyAgent.destination = _patrolPoints[_currentPatrolIndex].position;
+        //transform.position = Vector3.MoveTowards(transform.position, target.position, _speed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, target.position) < 1f)
         {
